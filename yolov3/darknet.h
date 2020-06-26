@@ -238,6 +238,28 @@ struct darknet_yolo : torch::nn::Module {
       return default_value;
       }
 
+   vector<string> load_labels(const char * labels_file) {
+      vector<string> str;
+      ifstream fs(labels_file);
+      string line;
+
+      if(!fs) {
+         std::cout << "Fail to load labels file:" << labels_file << endl;
+         return str;
+         }
+
+      while (getline (fs, line)) {
+         trim(line);
+         if (line.empty()) {
+            continue;
+         }
+	 str.push_back(line);
+	 cerr << line << endl;
+      }
+      fs.close();
+      return str;
+   } 
+
    void load_cfg(const char *cfg_file) {
       ifstream fs(cfg_file);
       string line;
@@ -513,7 +535,7 @@ struct darknet_yolo : torch::nn::Module {
       return result;
       }
    
-   torch::Tensor write_results(torch::Tensor prediction, int num_classes, float confidence, float nms_conf = 0.4f) {
+   torch::Tensor write_results(torch::Tensor prediction, std::vector<std::string> classes_name, float confidence, float nms_conf = 0.4f) {
       auto conf_mask = (prediction.select(2,4) > confidence).to(torch::kFloat32).unsqueeze(2);
       
       prediction.mul_(conf_mask);
@@ -530,6 +552,8 @@ struct darknet_yolo : torch::nn::Module {
       box_a.select(2, 2) = prediction.select(2, 0) + prediction.select(2, 2).div(2);
       box_a.select(2, 3) = prediction.select(2, 1) + prediction.select(2, 3).div(2);
       
+      //cerr << box_a << endl;
+
       prediction.slice(2, 0, 4) = box_a.slice(2, 0, 4);
       
       int batch_size = prediction.size(0);
@@ -542,14 +566,10 @@ struct darknet_yolo : torch::nn::Module {
       
       for (int i = 0; i < batch_size; i++) {
          auto image_prediction = prediction[i];
-         
-         // get the max classes score at each result
-         std::tuple<torch::Tensor, torch::Tensor> max_classes = torch::max(image_prediction.slice(1, item_attr_size, item_attr_size + num_classes), 1);
-         
-         // class score
+         std::tuple<torch::Tensor, torch::Tensor> max_classes = torch::max(image_prediction.slice(1,item_attr_size,item_attr_size+classes_name.size()),1);
          auto max_conf = std::get<0>(max_classes);
-         // index
          auto max_conf_score = std::get<1>(max_classes);
+
          max_conf = max_conf.to(torch::kFloat32).unsqueeze(1);
          max_conf_score = max_conf_score.to(torch::kFloat32).unsqueeze(1);
          
@@ -572,7 +592,10 @@ struct darknet_yolo : torch::nn::Module {
                   break;
                   }
                }
-            if (!found) img_classes.push_back(image_prediction_data[m][6]);
+            if (!found) {
+		//cerr << image_prediction_data << endl;
+		img_classes.push_back(image_prediction_data[m][6]);
+	      }
 	    }
          
          for (int k = 0; k < img_classes.size(); k++) {
@@ -580,6 +603,7 @@ struct darknet_yolo : torch::nn::Module {
             auto cls_mask = image_prediction_data * (image_prediction_data.select(1, 6) == cls).to(torch::kFloat32).unsqueeze(1);
             auto class_mask_index =  torch::nonzero(cls_mask.select(1, 5)).squeeze();
             auto image_pred_class = image_prediction_data.index_select(0, class_mask_index).view({-1,7});
+
             // ascend by confidence
             // seems that inverse method not work
             std::tuple<torch::Tensor,torch::Tensor> sort_ret = torch::sort(image_pred_class.select(1,4));
@@ -602,24 +626,39 @@ struct darknet_yolo : torch::nn::Module {
                // remove from list
                auto non_zero_index = torch::nonzero(image_pred_class.select(1,4)).squeeze();
                image_pred_class = image_pred_class.index_select(0, non_zero_index).view({-1,7});
-               }
+
+	       /*cerr << "********************************" << endl;
+	       cerr << "ious=           " << ious << endl;
+               cerr << "iou_mask=       " << iou_mask << endl;
+	       cerr << "cls=            " << cls << endl;
+	       cerr << "cls_mask=       " << cls_mask << endl;
+	       cerr << "cls_mask_index= " << class_mask_index << endl;
+	       cerr << "image_pred_cls= " << image_pred_class << endl;
+	       cerr << "non_zero_index= " << non_zero_index << endl;
+               cerr << "********************************" << endl;
+	       cerr << cls.item<int>() << endl;
+               if(cls.item<int>() <= classes_name.size()) {
+	          cerr << classes_name[cls.item<int>()] << endl;
+	          cerr << ious << endl;
+	       }*/	       
+            }
             
             torch::Tensor batch_index = torch::ones({image_pred_class.size(0), 1}).fill_(i);
-            
-            if (!write){
+
+            if (!write) {
                output = torch::cat({batch_index, image_pred_class}, 1);
                write = true;
                }
             else{
                auto out = torch::cat({batch_index, image_pred_class}, 1);
-               output = torch::cat({output,out}, 0);
+               output   = torch::cat({output,out}, 0);
                }
             
             num += 1;
             }
          }
       
-      if (num == 0){
+      if (num == 0) {
          return torch::zeros({0});
          }
       
