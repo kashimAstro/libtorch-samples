@@ -9,8 +9,8 @@ yolov3 <br>
 monodepth2 <br>
 simple module <br>
 
-![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/1.jpg)
-![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/2.jpg)
-![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/3.jpg)
+![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/dcgan-art.png)
+![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/dcgan-face.png)
+![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/yolov3-torch.png)
 <br>
 # incomplete
