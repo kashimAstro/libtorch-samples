@@ -6,8 +6,10 @@ based on the libtorch 1.5 frontend c++
 <br>
 dcgan (custom dataset + mnist)<br>
 yolov3 <br>
+ssd mobilenet <br>
 monodepth2 <br>
 simple module <br>
+simple tensor <br>
 
 ![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/dcgan-art.png)
 ![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/dcgan-face.png)
