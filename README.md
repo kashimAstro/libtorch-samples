@@ -13,8 +13,8 @@ simple tensor <br>
 
 <br>
 edit variables in Makefile<br>
-PWD=<path-library-include><br>
-CV=<pkg-config-opencv_3.x><br>
+PWD='path-library-include'<br>
+CV='pkg-config-opencv_3.x'<br>
 
 <br>
 
