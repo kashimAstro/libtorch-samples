@@ -11,6 +11,13 @@ monodepth2 <br>
 simple module <br>
 simple tensor <br>
 
+<br>
+edit variables in Makefile<br>
+PWD=<path-library-include><br>
+CV=<pkg-config-opencv_3.x><br>
+
+<br>
+
 ![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/dcgan-art.png)
 ![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/dcgan-face.png)
 ![alt tag](https://github.com/kashimAstro/libtorch-samples/blob/master/screen/yolov3-torch.png)
